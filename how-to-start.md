@@ -1,6 +1,8 @@
-# 🚀 Guide Pratique - Topology Spread Constraints
+# 🚀 Guide Pratique DevOps - Kubernetes Résilience et Monitoring
 
 ---
+
+## 📋 **PARTIE 1 : Topology Spread Constraints**
 
 ## 🔧 Étape 1 : Préparation du Cluster
 
@@ -185,3 +187,159 @@ kubectl top pods
 kubectl get endpoints
 kubectl describe service resilient-app
 ```
+
+---
+
+## 📋 **PARTIE 2 : Stack Monitoring Prometheus/Grafana**
+
+## 🔧 Étape 6 : Installation de la Stack de Monitoring
+
+### Ajouter le repository Helm Prometheus
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+
+### Déployer la stack kube-prometheus-stack
+```bash
+helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace
+```
+
+### Vérifier le déploiement
+```bash
+kubectl get pods -n monitoring
+kubectl get services -n monitoring
+```
+
+---
+
+## 🔧 Étape 7 : Configuration des Accès Web
+
+### Accéder à Grafana
+```bash
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80 &
+```
+
+### Accéder à Prometheus
+```bash
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090 &
+```
+
+### Récupérer les credentials Grafana
+```bash
+kubectl get secret -n monitoring prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+```
+
+---
+
+## 🔧 Étape 8 : Validation du Monitoring
+
+### Tester l'accès aux interfaces
+```bash
+curl http://localhost:3000/api/health
+curl http://localhost:9090/-/healthy
+```
+
+### Vérifier les dashboards Kubernetes
+```bash
+kubectl get configmaps -n monitoring | grep dashboard
+```
+
+---
+
+## 📋 **PARTIE 3 : Tests de Charge avec Ingress**
+
+## 🔧 Étape 9 : Configuration Ingress
+
+### Activer l'addon ingress minikube
+```bash
+minikube addons enable ingress
+kubectl get pods -n ingress-nginx
+```
+
+### Créer l'Ingress pour guestbook
+```bash
+kubectl apply -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: guestbook-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: guestbook.fbi.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: guestbook-service
+            port:
+              number: 80
+EOF
+```
+
+### Démarrer minikube tunnel
+```bash
+minikube tunnel &
+```
+
+---
+
+## 🔧 Étape 10 : Tests de Charge k6
+
+### Tester l'accès via Ingress
+```bash
+echo "$(minikube ip) guestbook.fbi.com" | sudo tee -a /etc/hosts
+curl http://guestbook.fbi.com
+```
+
+### Créer le script de test k6
+```bash
+cat > load-test.js <<EOF
+import http from 'k6/http';
+import { check } from 'k6';
+
+export let options = {
+  stages: [
+    { duration: '2m', target: 10 },
+    { duration: '5m', target: 50 },
+    { duration: '2m', target: 0 },
+  ],
+};
+
+export default function () {
+  let response = http.get('http://guestbook.fbi.com');
+  check(response, {
+    'status is 200': (r) => r.status === 200,
+  });
+}
+EOF
+```
+
+### Lancer les tests k6
+```bash
+k6 run load-test.js
+```
+
+---
+
+## 🔧 Étape 11 : Observation des Métriques
+
+### Surveiller pendant les tests
+```bash
+kubectl get pods -w
+kubectl top nodes
+kubectl top pods
+```
+
+### Vérifier les métriques dans Grafana
+```bash
+echo "Accédez à http://localhost:3000"
+echo "Username: admin"
+echo "Password: $(kubectl get secret -n monitoring prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 --decode)"
+```
+
+🚀 **J'ai maintenant un monitoring complet avec tests de performance validés !**
