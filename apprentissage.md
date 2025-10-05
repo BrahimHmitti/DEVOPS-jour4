@@ -62,6 +62,32 @@ topologySpreadConstraints:
 
 ---
 
+## ✅ Validation - Monitoring et Tests de Charge
+
+### 🎯 Stack Prometheus Déployée et Validée
+
+**Infrastructure monitoring :** Prometheus + Grafana + AlertManager opérationnels
+
+**Validations réussies :**
+1. ✅ **Repository Helm ajouté** : prometheus-community accessible
+2. ✅ **Stack déployée** : Tous les composants fonctionnels
+3. ✅ **Dashboards Kubernetes** : Métriques cluster visibles
+4. ✅ **Interface Grafana** : Accès via port-forward
+
+### 🎯 Tests de Charge k6 Validés
+
+**Infrastructure réseau :** Ingress NGINX + minikube tunnel
+
+**Validations réussies :**
+1. ✅ **Addon ingress activé** : NGINX controller déployé
+2. ✅ **Ingress configuré** : FQDN `.fbi.com` fonctionnel
+3. ✅ **Tests k6 adaptés** : Charge distribuée via Ingress
+4. ✅ **Métriques observées** : Impact visible en temps réel dans Grafana
+
+**Résultat final :** J'ai maintenant un monitoring complet et des tests de performance validés.
+
+---
+
 ## ✅ Validation - Topology Spread Constraints
 
 ### 🎯 Configuration Testée et Validée
@@ -76,4 +102,57 @@ topologySpreadConstraints:
 
 **Résultat final :** L'application est maintenant parfaitement résiliente aux pannes de nœuds.
 
+### 6. Stack de Monitoring Prometheus/Grafana
+
+**Problématique :** Besoin de surveiller les métriques du cluster et des applications en temps réel.
+
+**Solution déployée :** Stack kube-prometheus-stack avec Helm.
+
+**Composants installés :**
+- **Prometheus** : Collecte et stockage des métriques
+- **Grafana** : Dashboards et visualisation
+- **AlertManager** : Gestion des alertes
+
+**Bénéfices :**
+- **Observabilité complète** : Métriques cluster + applications
+- **Dashboards pré-configurés** : Kubernetes, nœuds, pods, services
+- **Alerting** : Notifications automatiques en cas d'anomalie
+- **Interface unified** : Vue d'ensemble centralisée
+
+### 7. Tests de Charge et Ingress
+
+**Problématique :** Valider les performances sous stress et distribuer la charge équitablement.
+
+**Solution implémentée :** 
+- **Ingress NGINX** : Distribution de charge et exposition
+- **Tests k6** : Génération de charge réaliste
+- **Corrélation métriques** : Impact visible dans Grafana
+
+**Configuration clé :**
+- Ingress avec FQDN `.fbi.com`
+- `minikube tunnel` pour LoadBalancer
+- Tests k6 via Ingress (pas port-forward)
+
+**Apprentissages :**
+- Port-forward sollicite toujours le même pod
+- Ingress répartit vraiment la charge
+- Métriques temps réel essentielles pour le dimensionnement
+
 ---
+
+## � Ce que j'ai retenu
+
+**Erreurs que j'ai évitées :**
+- J'utilise toujours `kubectl delete deployment nom` maintenant (plus jamais juste le nom)
+- Je ne touche jamais au service `kubernetes` - j'ai compris que c'est système
+- J'ai mémorisé la hiérarchie : Cluster → Node → Namespace → Deployment → ReplicaSet → Pods
+
+**Choix techniques que j'ai faits :**
+- J'ai gardé Docker comme driver minikube - c'est le plus rapide pour le développement
+- J'ai implémenté les Topology Spread Constraints partout - c'est obligatoire en production
+- J'ai testé la résilience avec `kubectl drain/uncordon` avant chaque déploiement
+
+**Ce qui marche vraiment :**
+- J'ai installé Prometheus + Grafana - l'observabilité c'est vital
+- J'ai utilisé k6 avec Ingress pour les tests de charge - ça répartit vraiment la charge
+- J'ai compris la différence : port-forward = un seul pod, Ingress = distribution équitable
