@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name localhost;
+        
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+        }
+        
+        location /info {
+            return 200 '# HELP http_requests_total Total HTTP requests\n# TYPE http_requests_total counter\nhttp_requests_total{method="GET",status="200"} 12345\n# HELP app_active_users Current active users\n# TYPE app_active_users gauge\napp_active_users 42\n';
+            add_header Content-Type text/plain;
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guestbook-with-metrics
+  labels:
+    app: guestbook-metrics
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: guestbook-metrics
+  template:
+    metadata:
+      labels:
+        app: guestbook-metrics
+    spec:
+      containers:
+      - name: guestbook
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: guestbook-metrics-service
+  labels:
+    app: guestbook-metrics
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "80"
+    prometheus.io/path: "/info"
+spec:
+  selector:
+    app: guestbook-metrics
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP

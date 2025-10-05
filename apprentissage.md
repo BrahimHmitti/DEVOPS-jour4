@@ -84,7 +84,28 @@ topologySpreadConstraints:
 3. ✅ **Tests k6 adaptés** : Charge distribuée via Ingress
 4. ✅ **Métriques observées** : Impact visible en temps réel dans Grafana
 
-**Résultat final :** J'ai maintenant un monitoring complet et des tests de performance validés.
+### 🎯 Dashboard Custom et Chaos Engineering Validés
+
+**Monitoring applicatif :** Dashboard guestbook `/info` + alerting
+
+**Validations réussies :**
+1. ✅ **Endpoint `/info` exploré** : Métriques custom identifiées
+2. ✅ **Dashboard créé** : Panels PromQL fonctionnels
+3. ✅ **Alertes configurées** : Notifications sur KPI critiques
+4. ✅ **Chaos Mesh déployé** : Expériences pod-kill opérationnelles
+5. ✅ **Résilience validée** : Récupération automatique confirmée
+
+### 🎯 CI/CD Self-Hosted Validé
+
+**Infrastructure CI/CD :** GitHub Actions runner dans Kubernetes
+
+**Validations réussies :**
+1. ✅ **Token GitHub créé** : Secret Kubernetes configuré
+2. ✅ **Runner déployé** : Pod fonctionnel dans le cluster
+3. ✅ **Enregistrement automatique** : Visible dans GitHub settings
+4. ✅ **Workflow testé** : Exécution réussie
+
+**Résultat final :** J'ai maintenant un environnement DevOps complet : monitoring + chaos engineering + CI/CD.
 
 ---
 
@@ -138,6 +159,55 @@ topologySpreadConstraints:
 - Ingress répartit vraiment la charge
 - Métriques temps réel essentielles pour le dimensionnement
 
+### 8. Dashboard Personnalisé pour Application Métier
+
+**Problématique :** Suivre les métriques spécifiques à mon application (pas seulement l'infra).
+
+**Solution implémentée :** Dashboard custom dans Grafana pour l'endpoint `/info` du guestbook.
+
+**Ce que j'ai découvert :**
+- L'endpoint `/info` expose des métriques au format Prometheus
+- PromQL permet d'extraire et manipuler ces données
+- Les graphiques temporels + jauges donnent une vue complète
+
+**Bénéfices :**
+- **Monitoring applicatif** : Métriques business en plus de l'infra
+- **Alerting ciblé** : Notifications sur les KPI critiques
+- **Vue unifiée** : Infra + app dans le même outil
+
+### 9. Chaos Engineering avec Chaos Mesh
+
+**Problématique :** Tester la résilience en conditions réelles avant les pannes.
+
+**Solution implémentée :** Chaos Mesh pour simuler des pannes contrôlées (pod-kill).
+
+**Ce que j'ai appris :**
+- Chaos Mesh utilise des CRDs pour définir les expériences
+- Pod-kill simule les pannes de pods aléatoires
+- L'impact est immédiatement visible dans Grafana
+- La récupération automatique fonctionne
+
+**Bénéfices :**
+- **Confiance** : J'ai validé la résilience avant la prod
+- **Amélioration continue** : Détection des points faibles
+- **Monitoring validé** : Les alertes se déclenchent correctement
+
+### 10. GitHub Actions Runner Self-Hosted
+
+**Problématique :** Exécuter les CI/CD dans mon infrastructure (contrôle + sécurité).
+
+**Solution implémentée :** Runner GitHub déployé comme pod dans Kubernetes.
+
+**Configuration réalisée :**
+- Token GitHub stocké comme secret Kubernetes
+- Image officielle du runner GitHub Actions
+- Accès Docker pour build des images
+
+**Bénéfices :**
+- **Contrôle total** : Runner dans mon cluster
+- **Sécurité** : Pas d'exposition externe
+- **Intégration** : Accès direct aux ressources Kubernetes
+
 ---
 
 ## � Ce que j'ai retenu
@@ -156,3 +226,6 @@ topologySpreadConstraints:
 - J'ai installé Prometheus + Grafana - l'observabilité c'est vital
 - J'ai utilisé k6 avec Ingress pour les tests de charge - ça répartit vraiment la charge
 - J'ai compris la différence : port-forward = un seul pod, Ingress = distribution équitable
+- J'ai créé un dashboard custom pour mon app - les métriques business c'est clé
+- J'ai déployé Chaos Mesh - tester la résilience avant les vraies pannes
+- J'ai installé un runner GitHub dans mon cluster - CI/CD maîtrisée

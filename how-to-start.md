@@ -343,3 +343,214 @@ echo "Password: $(kubectl get secret -n monitoring prometheus-grafana -o jsonpat
 ```
 
 🚀 **J'ai maintenant un monitoring complet avec tests de performance validés !**
+
+---
+
+## 📋 **PARTIE 4 : Dashboard Custom pour Application**
+
+## 🔧 Étape 12 : Exploration Endpoint Métriques
+
+### Explorer l'endpoint /info du guestbook
+```bash
+kubectl port-forward service/guestbook-service 8080:80 &
+curl http://localhost:8080/info
+```
+
+### Vérifier ce que Prometheus scrappe
+```bash
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090 &
+curl "http://localhost:9090/api/v1/label/__name__/values" | jq
+```
+
+---
+
+## 🔧 Étape 13 : Création Dashboard Grafana
+
+### Créer un nouveau dashboard dans Grafana
+```bash
+echo "Accédez à http://localhost:3000"
+echo "Cliquez sur '+' > Dashboard > Add Panel"
+```
+
+### Exemples de requêtes PromQL pour panels
+```bash
+# Taux de requêtes par seconde
+rate(http_requests_total[5m])
+
+# Latence moyenne
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+# Erreurs par minute
+increase(http_requests_total{status=~"5.."}[1m])
+```
+
+---
+
+## 🔧 Étape 14 : Configuration Alertes
+
+### Créer des alertes sur métriques critiques
+```bash
+# Dans Grafana: Alerting > Alert Rules > New Rule
+# Condition: http_requests_total rate > 100
+# Evaluation: every 10s for 30s
+```
+
+---
+
+## 📋 **PARTIE 5 : Chaos Engineering avec Chaos Mesh**
+
+## 🔧 Étape 15 : Installation Chaos Mesh
+
+### Ajouter le repository Helm Chaos Mesh
+```bash
+helm repo add chaos-mesh https://charts.chaos-mesh.org
+helm repo update
+```
+
+### Déployer Chaos Mesh
+```bash
+helm install chaos-mesh chaos-mesh/chaos-mesh --namespace chaos-mesh --create-namespace --set dashboard.create=true
+```
+
+### Vérifier l'installation
+```bash
+kubectl get pods -n chaos-mesh
+kubectl get crd | grep chaos
+```
+
+---
+
+## 🔧 Étape 16 : Accès Dashboard Chaos Mesh
+
+### Accéder au dashboard
+```bash
+kubectl port-forward -n chaos-mesh svc/chaos-dashboard 2333:2333 &
+echo "Dashboard accessible: http://localhost:2333"
+```
+
+---
+
+## 🔧 Étape 17 : Expérience Pod-Kill
+
+### Créer l'expérience pod-kill
+```bash
+kubectl apply -f - <<EOF
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: guestbook-pod-kill
+  namespace: default
+spec:
+  action: pod-kill
+  mode: one
+  duration: "30s"
+  selector:
+    labelSelectors:
+      app: guestbook
+  scheduler:
+    cron: "@every 2m"
+EOF
+```
+
+### Surveiller l'impact
+```bash
+kubectl get pods -w
+kubectl logs -f deployment/guestbook
+```
+
+---
+
+## 📋 **PARTIE 6 : GitHub Actions Runner Self-Hosted**
+
+## 🔧 Étape 18 : Préparation Token GitHub
+
+### Créer un token dans GitHub
+```bash
+echo "1. Allez dans Settings > Actions > Runners"
+echo "2. Cliquez 'New self-hosted runner'"
+echo "3. Copiez le token affiché"
+```
+
+### Créer le secret Kubernetes
+```bash
+kubectl create secret generic github-runner-token --from-literal=token=YOUR_TOKEN_HERE
+```
+
+---
+
+## 🔧 Étape 19 : Déploiement Runner
+
+### Déployer le runner comme pod
+```bash
+kubectl apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: github-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: github-runner
+  template:
+    metadata:
+      labels:
+        app: github-runner
+    spec:
+      containers:
+      - name: runner
+        image: sumologic/github-runner:latest
+        env:
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-runner-token
+              key: token
+        - name: GITHUB_OWNER
+          value: "BrahimHmitti"
+        - name: GITHUB_REPOSITORY
+          value: "DEVOPS-jour4"
+        volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      volumes:
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock
+EOF
+```
+
+---
+
+## 🔧 Étape 20 : Test du Runner
+
+### Vérifier l'enregistrement
+```bash
+kubectl logs deployment/github-runner
+kubectl get pods -l app=github-runner
+```
+
+### Créer un workflow de test
+```bash
+mkdir -p .github/workflows
+cat > .github/workflows/test-runner.yml <<EOF
+name: Test Self-Hosted Runner
+on: [push]
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v3
+    - name: Test
+      run: echo "Runner fonctionne dans Kubernetes!"
+EOF
+```
+
+### Pousser et vérifier
+```bash
+git add .github/
+git commit -m "Test runner self-hosted"
+git push
+```
+
+🚀 **J'ai maintenant un environnement DevOps complet : monitoring + chaos engineering + CI/CD !**
