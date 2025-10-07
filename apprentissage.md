@@ -1,7 +1,5 @@
 # 📚 Apprentissages DevOps - Jour 4
 
-## 🎯 Objectif
-Synthèse des concepts clés et leçons apprises sur Kubernetes et la résilience applicative.
 
 ---
 
@@ -192,21 +190,6 @@ topologySpreadConstraints:
 - **Amélioration continue** : Détection des points faibles
 - **Monitoring validé** : Les alertes se déclenchent correctement
 
-### 10. GitHub Actions Runner Self-Hosted
-
-**Problématique :** Exécuter les CI/CD dans mon infrastructure (contrôle + sécurité).
-
-**Solution implémentée :** Runner GitHub déployé comme pod dans Kubernetes.
-
-**Configuration réalisée :**
-- Token GitHub stocké comme secret Kubernetes
-- Image officielle du runner GitHub Actions
-- Accès Docker pour build des images
-
-**Bénéfices :**
-- **Contrôle total** : Runner dans mon cluster
-- **Sécurité** : Pas d'exposition externe
-- **Intégration** : Accès direct aux ressources Kubernetes
 
 ---
 
