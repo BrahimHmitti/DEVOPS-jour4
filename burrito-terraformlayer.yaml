@@ -1,0 +1,22 @@
+apiVersion: config.terraform.io/v1alpha1
+kind: TerraformLayer
+metadata:
+  name: guestbook-infra
+  namespace: burrito
+spec:
+  repository:
+    url: https://github.com/BrahimHmitti/DEVOPS-jour4
+    ref: main
+  path: terraform/guestbook
+  terraform:
+    version: "1.6.0"
+  backend:
+    type: kubernetes
+    config:
+      secret_suffix: guestbook-infra
+      namespace: burrito
+  variables:
+    - key: replicas
+      value: "3"
+    - key: app_name
+      value: "guestbook"

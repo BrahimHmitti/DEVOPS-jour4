@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: burrito
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: burrito
+  namespace: burrito
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: burrito-controller
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets", "serviceaccounts"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: burrito-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: burrito-controller
+subjects:
+- kind: ServiceAccount
+  name: burrito
+  namespace: burrito
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: burrito-controller
+  namespace: burrito
+  labels:
+    app: burrito
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: burrito
+  template:
+    metadata:
+      labels:
+        app: burrito
+    spec:
+      serviceAccountName: burrito
+      containers:
+      - name: controller
+        image: ghcr.io/padok-team/burrito:latest
+        env:
+        - name: BURRITO_CONTROLLER_TIMERS_DRIFT_DETECTION
+          value: "60"
+        - name: BURRITO_CONTROLLER_TIMERS_WAIT_ACTION
+          value: "30"
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
